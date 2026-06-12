@@ -15,8 +15,38 @@ class SistemaEstoque:
         self.frame_tabela = tk.Frame(root)
         self.frame_tabela.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        # --- NOVO: ESTILO VISUAL DA TABELA ---
+        estilo = ttk.Style()
+        estilo.theme_use("clam")  # Muda o tema padrão para um mais moderno e plano
+
+        # Configura as linhas da tabela
+        estilo.configure("Treeview",
+                         background="#ffffff",
+                         foreground="black",
+                         rowheight=30,  # Deixa as linhas mais altas para "respirar"
+                         fieldbackground="#ffffff",
+                         font=("Arial", 10)
+                         )
+
+        # Configura o cabeçalho
+        estilo.configure("Treeview.Heading",
+                         font=("Arial", 10, "bold"),
+                         background="#ecf0f1",  # Fundo cinza claro
+                         foreground="#2c3e50",  # Texto escuro
+                         relief="flat"  # Remove a borda grossa padrão
+                         )
+
+        # Cor de destaque quando o usuário clica numa linha
+        estilo.map("Treeview", background=[("selected", "#3498db")])
+
+        # Cria a tabela
         self.tree = ttk.Treeview(self.frame_tabela, show="headings")
         self.tree.pack(fill=tk.BOTH, expand=True)
+
+        # Define as cores para o efeito "Zebrado"
+        self.tree.tag_configure("linha_par", background="#f9f9f9")  # Cinza super claro
+        self.tree.tag_configure("linha_impar", background="#ffffff")  # Branco
+
 
         tk.Button(frame_botoes, text="🔄 Ver Estoque", command=self.ver_estoque, height=2).pack(fill=tk.X, padx=10,
                                                                                                pady=10)
@@ -63,11 +93,14 @@ class SistemaEstoque:
 
     def ver_estoque(self):
         self.limpar_tabela()
-        self.configurar_colunas(("ID", "Categoria", "Produto", "Tamanho", "Qtd", "CodigoBarras"))
+        # Removi o CodigoBarras daqui temporariamente apenas se você não o usa no SQL, ajuste se necessário.
+        self.configurar_colunas(("ID", "Categoria", "Produto", "Tamanho", "Qtd"))
         try:
             dados = operacoes.obter_estoque()
-            for linha in dados:
-                self.tree.insert("", tk.END, values=linha)
+            for index, linha in enumerate(dados):
+                # Se o índice for divisível por 2 (par), aplica a tag par, senão, ímpar
+                tag = "linha_par" if index % 2 == 0 else "linha_impar"
+                self.tree.insert("", tk.END, values=linha, tags=(tag,))
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
@@ -76,8 +109,9 @@ class SistemaEstoque:
         self.configurar_colunas(("ID Produto", "Produto", "Tamanho", "Qtd Vendida", "Data"))
         try:
             dados = operacoes.obter_historico()
-            for linha in dados:
-                self.tree.insert("", tk.END, values=linha)
+            for index, linha in enumerate(dados):
+                tag = "linha_par" if index % 2 == 0 else "linha_impar"
+                self.tree.insert("", tk.END, values=linha, tags=(tag,))
         except Exception as e:
             messagebox.showerror("Erro", str(e))
 
